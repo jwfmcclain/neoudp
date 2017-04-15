@@ -140,13 +140,12 @@ void loop() {
     // Else push the bits out to the strip
     for (int i=0; i<STRIP_LEN; i++) {
       int offset = 4 + (i * 4);
-      uint32_t c = strip.Color(packetBuffer[offset],
-			       packetBuffer[offset+1],
-			       packetBuffer[offset+2],
-			       packetBuffer[offset+3]);
-      
-      Serial.print(i); Serial.print(": "); Serial.println(c);
-      strip.setPixelColor(i, c);
+
+      strip.setPixelColor(i,
+			  packetBuffer[offset],
+			  packetBuffer[offset+1],
+			  packetBuffer[offset+2],
+			  packetBuffer[offset+3]);
     }
     
     strip.show();
