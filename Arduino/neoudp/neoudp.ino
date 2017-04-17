@@ -138,14 +138,40 @@ void loop() {
     }
 
     // Else push the bits out to the strip
+    //
+
+    char *led_data = &packetBuffer[4];
+    int data_len = 4 * STRIP_LEN;
+
+    // Is there a power limit set?
+#ifdef POWER_LIMIT
+    uint32_t sum = 0;
+
+    for (int i=0; i<data_len; i++) {
+      sum += led_data[i];
+    }
+
+    if (sum > POWER_LIMIT) {
+      float scale = POWER_LIMIT / (float)sum;
+
+      Serial.print("Sum: "); Serial.print(sum);
+      Serial.print(" POWER_LIMIT: "); Serial.print(POWER_LIMIT);
+      Serial.print(" Scaling by "); Serial.println(scale);
+
+      for (int i=0; i<data_len; i++) {
+	led_data[i] *= scale;
+      }
+    }
+#endif
+
     for (int i=0; i<STRIP_LEN; i++) {
-      int offset = 4 + (i * 4);
+      int offset = i * 4;
 
       strip.setPixelColor(i,
-			  packetBuffer[offset],
-			  packetBuffer[offset+1],
-			  packetBuffer[offset+2],
-			  packetBuffer[offset+3]);
+			  led_data[offset],
+			  led_data[offset+1],
+			  led_data[offset+2],
+			  led_data[offset+3]);
     }
     
     strip.show();
