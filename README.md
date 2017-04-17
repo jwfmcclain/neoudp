@@ -51,5 +51,5 @@ the 3 (or 4) bytes that it has been set too. Providing a value for
 `POWER_LIMIT` in `parameters.h` will cause the system to limit the sum
 of bytes sent to the NeoPixels to `POWER_LIMIT`. If the sum of the
 byte values in a packet's pixel data is greater than `POWER_LIMIT`
-then each value will be scaled down by sum divided `POWER_LIMIT`
-before sending the bytes to the NeoPixels.
+then each value will be scaled by `POWER_LIMIT` divided by sum before
+sending the bytes to the NeoPixels.
