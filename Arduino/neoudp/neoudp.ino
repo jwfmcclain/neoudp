@@ -130,7 +130,7 @@ void loop() {
       Serial.println(len);
 
       Serial.print("Sending reply to: "); Serial.print(Udp.remoteIP()); Serial.print(" beginPacket:");
-      Serial.println(Udp.beginPacket(Udp.remoteIP(), localPort));
+      Serial.println(Udp.beginPacket(Udp.remoteIP(), Udp.remotePort()));
       Serial.print("write: "); Serial.println(Udp.write(reply, ID_REPLY_LEN));
       Serial.print("endPacket: "); Serial.println(Udp.endPacket());
       
