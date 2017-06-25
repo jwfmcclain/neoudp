@@ -5,6 +5,7 @@ import struct
 import math
 import threading
 import Queue
+import errno
 
 from contextlib import contextmanager
 
@@ -14,17 +15,14 @@ def set_magic(buffer):
     buffer[2] = 0x0a
     buffer[3] = 0x3c
 
-port = 10000
+discover_packet = bytearray(4)
+set_magic(discover_packet)
+
+server_port = 10000
 
 #####################################################################
 #
-# Setup a single socket and thread for receiving neoudp packets.
-#
-# Arguably overkill, but we want some structure that allows discover
-# to send additionally discovery packets if it doesn't get a response.
-#
-# In the future may also use this structure get error responses from
-# show calls.
+# Setup a single socket and thread for handling discovery.
 #
 # Client register handlers that get called whenever a neoudp packet is
 # received. This is inline with the with recvfrom from call so these
@@ -32,12 +30,13 @@ port = 10000
 #
 # Handler gets the src address of the packet and the packet itself.
 #
-class Listener:
+class DiscoveryListener:
     def __init__(self):
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        bind_addr = ('', port)
+        self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+
+        bind_addr = ('', 0)
         self.sock.bind(bind_addr)
-        self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.handlers = set()
         self.lock = threading.Lock()
 
@@ -48,6 +47,9 @@ class Listener:
     def remove(self, handler):
         with self.lock:
             self.handlers.remove(handler)
+
+    def send_discovery(self):
+        self.sock.sendto(discover_packet, ('<broadcast>', server_port))
 
     @contextmanager
     def handler(self, handler_fn):
@@ -65,7 +67,7 @@ class Listener:
             for handler in iset:
                 handler(data, address)
 
-listener = Listener()
+listener = DiscoveryListener()
 listener_thread = threading.Thread(target=listener.run, name="neoudp listener thread")
 listener_thread.daemon = True
 listener_thread.start()
@@ -81,15 +83,9 @@ def discover(unit_id=None, retry_fn=None):
 
     """
 
-    discover_packet = bytearray(4)
-    set_magic(discover_packet)
-
-    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
-
     packets = Queue.Queue()
     with listener.handler(lambda data, address: packets.put((data, address))):
-        sock.sendto(discover_packet, ('<broadcast>', port))
+        listener.send_discovery()
 
         while True:
             try:
@@ -98,7 +94,7 @@ def discover(unit_id=None, retry_fn=None):
                 # No response, try another query
                 if retry_fn:
                     retry_fn()
-                sock.sendto(discover_packet, ('<broadcast>', port))
+                listener.send_discovery()
                 continue
 
             if len(data) != 8:
@@ -121,6 +117,35 @@ def print_dot():
 
     sys.stdout.write(".")
     sys.stdout.flush()
+
+def console_driver(fn):
+    unit_id = int(sys.argv[1])
+
+    sys.stdout.write("Searching for unit %d:" % unit_id)
+    sys.stdout.flush()
+
+    strip = discover(unit_id, print_dot)
+
+    sys.stdout.write("found %s\n" % strip)
+    sys.stdout.flush()
+
+    while True:
+        try:
+            fn(strip)
+            return
+        except socket.error as e:
+            strip.close()
+
+            if e.errno in (errno.EHOSTUNREACH, errno.EHOSTDOWN, errno.ENETUNREACH):
+                sys.stdout.write("%s: %s disappeared: searching" % (time.strftime("%c"), strip))
+                sys.stdout.flush()
+
+                strip = discover(unit_id, print_dot)
+
+                sys.stdout.write("found %s\n" % strip)
+                sys.stdout.flush()
+            else:
+                raise
 
 class Strip:
     """Client for a neoudp server.
@@ -229,6 +254,9 @@ class Strip:
 
                 for i in self.enumerate(q, 3):
                     self.setPixelColor(i, 0, 0, 0)
+
+    def close(self):
+        self.sock.close()
 
 class TriangleImpulse:
     """One shot triangle impulse."""
