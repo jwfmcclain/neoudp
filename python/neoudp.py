@@ -203,6 +203,12 @@ class Strip:
         for i in xrange(0, start):
             yield i
 
+    def clear(self):
+        """Set all the pixels to off."""
+
+        for i in self.enumerate():
+            self.setPixelColor(i, 0, 0, 0)
+
     def show(self):
         """Send the current color data to the server.
 
