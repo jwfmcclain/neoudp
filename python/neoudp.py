@@ -169,8 +169,9 @@ class Strip:
         return ((len(self.buffer) - 4) / 4)
 
     def __str__(self):
-        return "neoudp.Strip unit id:%d len:%d channels:%d" % (
-            self.id, len(self), self.channels)
+        peer = self.sock.getpeername()
+        return "neoudp.Strip unit id:%d at:%s:%d len:%d channels:%d" % (
+            self.id, peer[0], peer[1], len(self), self.channels)
 
     def setPixelColor(self, i, r, g, b, w=0):
         """Set the color of NeoPixel 'i'.
