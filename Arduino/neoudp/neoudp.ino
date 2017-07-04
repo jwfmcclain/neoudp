@@ -24,6 +24,8 @@ char reply[ID_REPLY_LEN];
 byte channel_count = 3;
 
 void setup() {
+  pinMode(LEDPIN, OUTPUT);
+
   // Don't wait forever if we aren't hooked up to a serial device.
   for (int i=0; i<5 && !Serial; i++) {
     delay(1000);
@@ -64,7 +66,7 @@ void setup() {
   }
 
   unsigned short strip_length = STRIP_LEN;
-  
+
   reply[0] = 0x27; // Magic
   reply[1] = 0x1d;
   reply[2] = 0x0a;
@@ -107,7 +109,9 @@ void loop() {
     Serial.println(Udp.remotePort());
 
     // Read the packet into packetBufffer
+    digitalWrite(LEDPIN, HIGH);
     int len = Udp.read(packetBuffer, UDPSIZE);
+    digitalWrite(LEDPIN, LOW);
 
     if (len < 4) {
       Serial.print("No magic, packet length: ");
@@ -120,8 +124,8 @@ void loop() {
     {
       Serial.println("Unexpected magic");
       return;
-    }      
-	
+    }
+
     if (len != UDPSIZE) {
       // Wrong length, assume it is a discovery packet and send a
       // reply.
@@ -133,7 +137,7 @@ void loop() {
       Serial.println(Udp.beginPacket(Udp.remoteIP(), Udp.remotePort()));
       Serial.print("write: "); Serial.println(Udp.write(reply, ID_REPLY_LEN));
       Serial.print("endPacket: "); Serial.println(Udp.endPacket());
-      
+
       return;
     }
 
@@ -173,7 +177,7 @@ void loop() {
 			  led_data[offset+2],
 			  led_data[offset+3]);
     }
-    
+
     strip.show();
   }
 }
