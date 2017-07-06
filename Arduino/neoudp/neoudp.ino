@@ -97,7 +97,10 @@ void setup() {
 void loop() {
   // If there's data available, read a packet
   //
+  digitalWrite(LEDPIN, HIGH);
   int packetSize = Udp.parsePacket();
+  digitalWrite(LEDPIN, LOW);
+
   if (packetSize) {
 
     Serial.print("Received packet of size ");
@@ -109,9 +112,7 @@ void loop() {
     Serial.println(Udp.remotePort());
 
     // Read the packet into packetBufffer
-    digitalWrite(LEDPIN, HIGH);
     int len = Udp.read(packetBuffer, UDPSIZE);
-    digitalWrite(LEDPIN, LOW);
 
     if (len < 4) {
       Serial.print("No magic, packet length: ");
