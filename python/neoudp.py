@@ -169,7 +169,14 @@ class Strip:
         return ((len(self.buffer) - 4) / 4)
 
     def __str__(self):
-        peer = self.sock.getpeername()
+        try:
+            peer = self.sock.getpeername()
+        except socket.error as e:
+            if e.errno not in (errno.EBADF, ):
+                raise
+            peer = ('unknown', -1)
+
+
         return "neoudp.Strip unit id:%d at:%s:%d len:%d channels:%d" % (
             self.id, peer[0], peer[1], len(self), self.channels)
 
