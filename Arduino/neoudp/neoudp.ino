@@ -121,7 +121,7 @@ void loop() {
     }
 
     if (packetBuffer[0] != 0x27 || packetBuffer[1] != 0x1d ||
-	packetBuffer[2] != 0x0a || packetBuffer[3] != 0x3c)
+        packetBuffer[2] != 0x0a || packetBuffer[3] != 0x3c)
     {
       Serial.println("Unexpected magic");
       return;
@@ -164,7 +164,7 @@ void loop() {
       Serial.print(" Scaling by "); Serial.println(scale);
 
       for (int i=0; i<data_len; i++) {
-	led_data[i] *= scale;
+        led_data[i] *= scale;
       }
     }
 #endif
@@ -173,10 +173,10 @@ void loop() {
       int offset = i * 4;
 
       strip.setPixelColor(i,
-			  led_data[offset],
-			  led_data[offset+1],
-			  led_data[offset+2],
-			  led_data[offset+3]);
+                          led_data[offset],
+                          led_data[offset+1],
+                          led_data[offset+2],
+                          led_data[offset+3]);
     }
 
     strip.show();
@@ -210,10 +210,10 @@ void try_wifi() {
       // wait 10 seconds for connection:
       uint8_t timeout = 10;
       while (timeout > 0 && (WiFi.status() != WL_CONNECTED)) {
-	Serial.print("WiFi Loop: WiFi.status() != WL_CONNECTED:");
-	Serial.println(WiFi.status());
-	timeout--;
-	wifi_check_delay();
+        Serial.print("WiFi Loop: WiFi.status() != WL_CONNECTED:");
+        Serial.println(WiFi.status());
+        timeout--;
+        wifi_check_delay();
       }
   } while (WiFi.status() != WL_CONNECTED);
 
